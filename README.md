@@ -1,4 +1,4 @@
-# Kitaplığım 📚 (v0.0.2)
+# Kitaplığım 📚 (v0.0.3)
 
 Kişisel kütüphane, kitap notları/alıntıları ve okuma hedefleri takip uygulaması.
 
@@ -23,7 +23,8 @@ Yalın, edebi ve göz yormayan bir arayüze sahiptir.
   - JSON formatında tüm kütüphaneyi ve notları yedekleme (Export).
 - **Güvenlik & Yetkilendirme**:
   - Ziyaretçiler ve giriş yapmamış kullanıcılar için **Salt-Okunur (Read-Only)** mod.
-  - Veri değişikliği (kitap ekleme, düzenleme, silme, not ekleme, hedef belirleme) **yalnızca yetkili e-posta** (`kitapligim@emre.mozmail.com`) ile yapılabilir.
+  - Veri değişikliği (kitap ekleme, düzenleme, silme, not ekleme, hedef belirleme) **yalnızca yetkili yönetici e-postası** ile yapılabilir.
+  - E-postaya gönderilen güvenli bağlantı (Passwordless Email Link) veya şifre ile giriş desteği.
   - Firestore Security Rules ile bulut seviyesinde tam koruma.
 - **Tasarım**:
   - Kâğıt/kitap sıcaklığında edebi palet, Fraunces serif ve DM Sans yazı tipleri.
@@ -53,9 +54,9 @@ npm run build
 
 Firestore kuralları `firestore.rules` dosyasında tanımlıdır:
 - `read`: Herkes kütüphaneyi ve alıntıları okuyabilir (`allow read: if true;`).
-- `create`, `update`, `delete`: Yalnızca `kitapligim@emre.mozmail.com` adresine açıktır ve şema doğrulaması yapılır.
+- `create`, `update`, `delete`: Yalnızca yetkili yönetici hesabına açıktır ve şema doğrulaması yapılır.
 
 ## 📦 Sürüm Yönetimi
 
-- Güncel sürüm: `0.0.2`
+- Güncel sürüm: `0.0.3`
 - Semver kurallarına göre `index.html`/`Header.tsx`, `package.json` ve `README.md` dosyalarında sürüm senkronize tutulur.

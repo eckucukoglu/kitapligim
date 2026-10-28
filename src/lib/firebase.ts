@@ -2,6 +2,9 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
   signOut, 
   onAuthStateChanged,
   sendPasswordResetEmail,
@@ -46,11 +49,43 @@ export function isCurrentUserAuthorized(): boolean {
   return isAuthorized(auth.currentUser?.email);
 }
 
-// Authentication
+// Authentication: Send Magic Link / Password to Email
+export async function sendLoginLink(email: string): Promise<void> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (cleanEmail !== AUTHORIZED_EMAIL.toLowerCase()) {
+    throw new Error('Yetkisiz e-posta adresi.');
+  }
+
+  const actionCodeSettings = {
+    url: window.location.origin + window.location.pathname,
+    handleCodeInApp: true,
+  };
+
+  await sendSignInLinkToEmail(auth, cleanEmail, actionCodeSettings);
+  window.localStorage.setItem('kitapligim_email_for_signin', cleanEmail);
+}
+
+// Check & Complete Email Link Sign In on App Load
+export async function handleEmailLinkSignIn(): Promise<User | null> {
+  if (isSignInWithEmailLink(auth, window.location.href)) {
+    let email = window.localStorage.getItem('kitapligim_email_for_signin');
+    if (!email) {
+      email = AUTHORIZED_EMAIL;
+    }
+    const result = await signInWithEmailLink(auth, email, window.location.href);
+    window.localStorage.removeItem('kitapligim_email_for_signin');
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return result.user;
+  }
+  return null;
+}
+
+// Authentication with Password
 export async function loginWithEmail(email: string, pass: string): Promise<User> {
   const cleanEmail = email.trim().toLowerCase();
   if (cleanEmail !== AUTHORIZED_EMAIL.toLowerCase()) {
-    throw new Error(`Yalnızca yetkili e-posta adresi (${AUTHORIZED_EMAIL}) ile giriş yapılabilir.`);
+    throw new Error('Yetkisiz e-posta adresi veya geçersiz şifre.');
   }
   const credential = await signInWithEmailAndPassword(auth, cleanEmail, pass);
   return credential.user;
@@ -58,6 +93,9 @@ export async function loginWithEmail(email: string, pass: string): Promise<User>
 
 export async function sendResetEmail(email: string): Promise<void> {
   const cleanEmail = email.trim().toLowerCase();
+  if (cleanEmail !== AUTHORIZED_EMAIL.toLowerCase()) {
+    throw new Error('Yetkisiz e-posta adresi.');
+  }
   await sendPasswordResetEmail(auth, cleanEmail);
 }
 
@@ -92,7 +130,7 @@ export function subscribeToBooks(onData: (books: Book[]) => void, onError?: (err
 
 export async function saveBookToCloud(book: Book): Promise<void> {
   if (!isCurrentUserAuthorized()) {
-    throw new Error('Veri ekleme/düzenleme yetkisi yalnızca kitapligim@emre.mozmail.com adresine aittir.');
+    throw new Error('Veri değişikliği için yetkiniz bulunmamaktadır.');
   }
   const ref = doc(db, 'books', book.id);
   const data: Record<string, any> = { ...book, updatedAt: Date.now() };
@@ -102,7 +140,7 @@ export async function saveBookToCloud(book: Book): Promise<void> {
 
 export async function deleteBookFromCloud(bookId: string): Promise<void> {
   if (!isCurrentUserAuthorized()) {
-    throw new Error('Veri silme yetkisi yalnızca kitapligim@emre.mozmail.com adresine aittir.');
+    throw new Error('Veri değişikliği için yetkiniz bulunmamaktadır.');
   }
   await deleteDoc(doc(db, 'books', bookId));
 }
@@ -126,7 +164,7 @@ export function subscribeToNotes(onData: (notes: BookNote[]) => void, onError?: 
 
 export async function saveNoteToCloud(note: BookNote): Promise<void> {
   if (!isCurrentUserAuthorized()) {
-    throw new Error('Not ekleme/düzenleme yetkisi yalnızca kitapligim@emre.mozmail.com adresine aittir.');
+    throw new Error('Veri değişikliği için yetkiniz bulunmamaktadır.');
   }
   const ref = doc(db, 'notes', note.id);
   const data: Record<string, any> = { ...note, updatedAt: Date.now() };
@@ -136,7 +174,7 @@ export async function saveNoteToCloud(note: BookNote): Promise<void> {
 
 export async function deleteNoteFromCloud(noteId: string): Promise<void> {
   if (!isCurrentUserAuthorized()) {
-    throw new Error('Not silme yetkisi yalnızca kitapligim@emre.mozmail.com adresine aittir.');
+    throw new Error('Veri değişikliği için yetkiniz bulunmamaktadır.');
   }
   await deleteDoc(doc(db, 'notes', noteId));
 }
@@ -158,7 +196,7 @@ export function subscribeToGoal(year: number, onData: (goal: ReadingGoal | null)
 
 export async function saveGoalToCloud(goal: ReadingGoal): Promise<void> {
   if (!isCurrentUserAuthorized()) {
-    throw new Error('Hedef güncelleme yetkisi yalnızca kitapligim@emre.mozmail.com adresine aittir.');
+    throw new Error('Veri değişikliği için yetkiniz bulunmamaktadır.');
   }
   const ref = doc(db, 'goals', String(goal.year));
   const data = { ...goal, updatedAt: Date.now() };

@@ -11,7 +11,7 @@ import {
   deleteNoteFromCloud, 
   saveGoalToCloud, 
   logOut,
-  AUTHORIZED_EMAIL 
+  handleEmailLinkSignIn 
 } from './lib/firebase';
 import { INITIAL_BOOKS, INITIAL_NOTES, INITIAL_GOAL } from './utils/initialData';
 import { Header } from './components/Header';
@@ -82,13 +82,27 @@ export const App: React.FC = () => {
     }
   }, [darkMode]);
 
+  // Check for Email Link sign-in on app load
+  useEffect(() => {
+    handleEmailLinkSignIn()
+      .then((user) => {
+        if (user) {
+          showToast('Giriş başarılı! Hoş geldiniz.', 'success');
+        }
+      })
+      .catch((err) => {
+        console.error('Email link sign in error:', err);
+      });
+  }, []);
+
   // Firebase Auth listener
   useEffect(() => {
     const unsub = subscribeToAuth((user, isAuth) => {
       setCurrentUserEmail(user?.email || null);
       setIsAuthorizedUser(isAuth);
       if (user && !isAuth) {
-        showToast(`Giriş yapılan adres (${user.email}) yetkili değil. Yalnızca ${AUTHORIZED_EMAIL} değişiklik yapabilir.`, 'error');
+        showToast('Yetkisiz hesap. Oturum kapatılıyor.', 'error');
+        logOut();
       }
     });
     return () => unsub();
@@ -143,7 +157,7 @@ export const App: React.FC = () => {
   // Guard Helper: verifies permission before action
   const requireAuth = (actionName: string): boolean => {
     if (!isAuthorizedUser) {
-      showToast(`${actionName} için yetkili hesap (${AUTHORIZED_EMAIL}) ile giriş yapmalısınız.`, 'info');
+      showToast(`${actionName} için yönetici girişi yapmalısınız.`, 'info');
       setIsAuthModalOpen(true);
       return false;
     }
@@ -334,14 +348,13 @@ export const App: React.FC = () => {
       {!isAuthorizedUser && (
         <div className="bg-amber-500/10 dark:bg-amber-950/40 border-b border-amber-500/20 py-2 px-4 text-center text-xs text-amber-800 dark:text-amber-300">
           <span>
-            Şu an <strong>Salt-Okunur</strong> moddasınız. Kitap ekleme, düzenleme veya silme işlemleri için{' '}
+            Şu an <strong>Salt-Okunur</strong> moddasınız. Kitap ekleme veya düzenleme için{' '}
             <button
               onClick={() => setIsAuthModalOpen(true)}
               className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-100 ml-1"
             >
               Giriş Yapın
-            </button>{' '}
-            (Yalnızca {AUTHORIZED_EMAIL} yetkilidir).
+            </button>.
           </span>
         </div>
       )}
@@ -416,11 +429,11 @@ export const App: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
             <span>Kitaplığım &copy; {new Date().getFullYear()} — Kişisel Kütüphane & Okuma Hedefleri</span>
-            <span className="ml-2 font-mono text-[10px] bg-paper-200 dark:bg-paper-800 px-1.5 py-0.5 rounded">v0.0.2</span>
+            <span className="ml-2 font-mono text-[10px] bg-paper-200 dark:bg-paper-800 px-1.5 py-0.5 rounded">v0.0.3</span>
           </div>
           <div className="text-[11px] text-paper-400">
             {isAuthorizedUser ? (
-              <span className="text-emerald-600 dark:text-emerald-400">Yönetici Oturumu Açık ({AUTHORIZED_EMAIL})</span>
+              <span className="text-emerald-600 dark:text-emerald-400">Yönetici Oturumu Açık</span>
             ) : (
               <span>Salt-Okunur Ziyaretçi Modu</span>
             )}
@@ -433,7 +446,7 @@ export const App: React.FC = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => {
-          showToast(`Hoş geldiniz! Yetkili girişi sağlandı (${AUTHORIZED_EMAIL}).`, 'success');
+          showToast('Hoş geldiniz! Giriş başarıyla sağlandı.', 'success');
         }}
       />
 
