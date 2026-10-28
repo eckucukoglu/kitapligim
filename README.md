@@ -1,4 +1,4 @@
-# Kitaplığım 📚 (v0.0.3)
+# Kitaplığım 📚 (v0.0.4)
 
 Kişisel kütüphane, kitap notları/alıntıları ve okuma hedefleri takip uygulaması.
 
@@ -58,5 +58,5 @@ Firestore kuralları `firestore.rules` dosyasında tanımlıdır:
 
 ## 📦 Sürüm Yönetimi
 
-- Güncel sürüm: `0.0.3`
+- Güncel sürüm: `0.0.4`
 - Semver kurallarına göre `index.html`/`Header.tsx`, `package.json` ve `README.md` dosyalarında sürüm senkronize tutulur.

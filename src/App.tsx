@@ -429,7 +429,7 @@ export const App: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
             <span>Kitaplığım &copy; {new Date().getFullYear()} — Kişisel Kütüphane & Okuma Hedefleri</span>
-            <span className="ml-2 font-mono text-[10px] bg-paper-200 dark:bg-paper-800 px-1.5 py-0.5 rounded">v0.0.3</span>
+            <span className="ml-2 font-mono text-[10px] bg-paper-200 dark:bg-paper-800 px-1.5 py-0.5 rounded">v0.0.4</span>
           </div>
           <div className="text-[11px] text-paper-400">
             {isAuthorizedUser ? (
