@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "kitapligim55"
+  },
+  "targets": {
+    "kitapligim55": {
+      "hosting": {
+        "kitapligim": [
+          "kitapligim"
+        ]
+      }
+    }
+  }
+}

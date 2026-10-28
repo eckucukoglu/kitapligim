@@ -1,0 +1,191 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: books
+    // Document ID: {bookId}
+    // Fields:
+    //   - id: string (optional, matches bookId)
+    //   - title: string (required, 1-200 chars) - Book title
+    //   - author: string (required, 1-200 chars) - Author name
+    //   - status: string (required, 'want_to_read' | 'reading' | 'read' | 'abandoned')
+    //   - totalPages: number (optional, >= 0) - Total page count
+    //   - currentPage: number (optional, >= 0) - Current read page
+    //   - rating: number (optional, 0-5) - Personal score
+    //   - category: string (optional, <= 100 chars) - Genre or category
+    //   - startDate: string (optional, <= 50 chars) - ISO date or date string
+    //   - finishDate: string (optional, <= 50 chars) - ISO date or date string
+    //   - isbn: string (optional, <= 50 chars) - ISBN-10 or ISBN-13
+    //   - coverUrl: string (optional, <= 2048 chars) - Image URL
+    //   - review: string (optional, <= 10000 chars) - Personal review
+    //   - notesCount: number (optional, >= 0) - Cached count of notes
+    //   - createdAt: number (required, immutable) - Creation epoch timestamp
+    //   - updatedAt: number (required) - Last update epoch timestamp
+    //
+    // Collection: notes
+    // Document ID: {noteId}
+    // Fields:
+    //   - id: string (optional, matches noteId)
+    //   - bookId: string (required, 1-100 chars, immutable) - Associated book ID
+    //   - bookTitle: string (optional, <= 200 chars) - Denormalized book title
+    //   - bookAuthor: string (optional, <= 200 chars) - Denormalized book author
+    //   - pageNumber: number | null (optional, >= 0) - Page of excerpt
+    //   - quote: string (required, 1-5000 chars) - Highlight or quote excerpt
+    //   - thought: string (optional, <= 5000 chars) - Personal commentary or thought
+    //   - tags: list (optional, <= 20 items) - Subject tags
+    //   - createdAt: number (required, immutable) - Creation epoch timestamp
+    //   - updatedAt: number (optional) - Last update epoch timestamp
+    //
+    // Collection: goals
+    // Document ID: {goalId}
+    // Fields:
+    //   - year: number (required, >= 2000, immutable) - Goal year
+    //   - targetBooks: number (required, >= 1) - Annual target book count
+    //   - targetPages: number (optional, >= 0) - Annual target page count
+    //   - updatedAt: number (optional) - Last update epoch timestamp
+    //
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the authenticated user is the designated admin (case-insensitive)
+    function isAuthorizedAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.email != null &&
+        request.auth.token.email.lower() == 'kitapligim@emre.mozmail.com';
+    }
+
+    // Validate that the document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate required fields exist
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validator for /books/{bookId}
+    function isValidBook(bookId) {
+      let data = request.resource.data;
+      return hasRequiredFields(['title', 'author', 'status', 'createdAt', 'updatedAt']) &&
+        hasOnlyAllowedFields([
+          'id', 'title', 'author', 'status', 'totalPages', 'currentPage',
+          'rating', 'category', 'startDate', 'finishDate', 'isbn',
+          'coverUrl', 'review', 'notesCount', 'createdAt', 'updatedAt'
+        ]) &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.author is string && data.author.size() > 0 && data.author.size() <= 200 &&
+        data.status is string && data.status in ['want_to_read', 'reading', 'read', 'abandoned'] &&
+        data.createdAt is number &&
+        data.updatedAt is number &&
+        (!('id' in data) || (data.id is string && data.id == bookId)) &&
+        (!('totalPages' in data) || (data.totalPages is number && data.totalPages >= 0)) &&
+        (!('currentPage' in data) || (data.currentPage is number && data.currentPage >= 0)) &&
+        (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 5)) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+        (!('startDate' in data) || (data.startDate is string && data.startDate.size() <= 50)) &&
+        (!('finishDate' in data) || (data.finishDate is string && data.finishDate.size() <= 50)) &&
+        (!('isbn' in data) || (data.isbn is string && data.isbn.size() <= 50)) &&
+        (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 2048)) &&
+        (!('review' in data) || (data.review is string && data.review.size() <= 10000)) &&
+        (!('notesCount' in data) || (data.notesCount is number && data.notesCount >= 0));
+    }
+
+    // Update validation for /books/{bookId}
+    function isBookUpdateValid() {
+      return request.resource.data.createdAt == resource.data.createdAt &&
+        (!('id' in resource.data) || !('id' in request.resource.data) || request.resource.data.id == resource.data.id);
+    }
+
+    // Validator for /notes/{noteId}
+    function isValidNote(noteId) {
+      let data = request.resource.data;
+      return hasRequiredFields(['bookId', 'quote', 'createdAt']) &&
+        hasOnlyAllowedFields([
+          'id', 'bookId', 'bookTitle', 'bookAuthor', 'pageNumber',
+          'quote', 'thought', 'tags', 'createdAt', 'updatedAt'
+        ]) &&
+        data.bookId is string && data.bookId.size() > 0 && data.bookId.size() <= 100 &&
+        data.quote is string && data.quote.size() > 0 && data.quote.size() <= 5000 &&
+        data.createdAt is number &&
+        (!('id' in data) || (data.id is string && data.id == noteId)) &&
+        (!('bookTitle' in data) || (data.bookTitle is string && data.bookTitle.size() <= 200)) &&
+        (!('bookAuthor' in data) || (data.bookAuthor is string && data.bookAuthor.size() <= 200)) &&
+        (!('pageNumber' in data) || data.pageNumber == null || (data.pageNumber is number && data.pageNumber >= 0)) &&
+        (!('thought' in data) || (data.thought is string && data.thought.size() <= 5000)) &&
+        (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
+        (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    // Update validation for /notes/{noteId}
+    function isNoteUpdateValid() {
+      return request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.bookId == resource.data.bookId &&
+        (!('id' in resource.data) || !('id' in request.resource.data) || request.resource.data.id == resource.data.id);
+    }
+
+    // Validator for /goals/{goalId}
+    function isValidGoal(goalId) {
+      let data = request.resource.data;
+      return hasRequiredFields(['year', 'targetBooks']) &&
+        hasOnlyAllowedFields(['year', 'targetBooks', 'targetPages', 'updatedAt']) &&
+        data.year is number && data.year >= 2000 &&
+        data.targetBooks is number && data.targetBooks >= 1 &&
+        (!('targetPages' in data) || (data.targetPages is number && data.targetPages >= 0)) &&
+        (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    // Update validation for /goals/{goalId}
+    function isGoalUpdateValid() {
+      return request.resource.data.year == resource.data.year;
+    }
+
+    // ===============================================================
+    // Rules Definitions
+    // ===============================================================
+
+    // Books Collection: Publicly readable; strictly managed by authorized administrator
+    match /books/{bookId} {
+      allow read: if true;
+      allow create: if isAuthorizedAdmin() && isValidBook(bookId);
+      allow update: if isAuthorizedAdmin() && isValidBook(bookId) && isBookUpdateValid();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // Notes Collection: Publicly readable; strictly managed by authorized administrator
+    match /notes/{noteId} {
+      allow read: if true;
+      allow create: if isAuthorizedAdmin() && isValidNote(noteId);
+      allow update: if isAuthorizedAdmin() && isValidNote(noteId) && isNoteUpdateValid();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // Goals Collection: Publicly readable; strictly managed by authorized administrator
+    match /goals/{goalId} {
+      allow read: if true;
+      allow create: if isAuthorizedAdmin() && isValidGoal(goalId);
+      allow update: if isAuthorizedAdmin() && isValidGoal(goalId) && isGoalUpdateValid();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // Default Deny: All other documents and subcollections are denied by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
