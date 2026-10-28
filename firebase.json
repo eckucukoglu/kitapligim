@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "site": "kitapligim",
     "public": "dist",
     "ignore": [
       "firebase.json",

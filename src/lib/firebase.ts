@@ -24,12 +24,13 @@ export const AUTHORIZED_EMAIL = 'kitapligim@emre.mozmail.com';
 
 // Firebase configuration for Kitaplığım
 export const firebaseConfig = {
+  projectId: "benimkitapligim",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  storageBucket: "benimkitapligim.firebasestorage.app",
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: "kitapligim55.firebaseapp.com",
-  projectId: "kitapligim55",
-  storageBucket: "kitapligim55.firebasestorage.app",
+  authDomain: "benimkitapligim.firebaseapp.com",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
+  projectNumber: import.meta.env.VITE_FIREBASE_PROJECT_NUMBER || ""
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

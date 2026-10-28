@@ -39,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
                   Kitaplığım
                 </h1>
                 <span className="app-version px-2 py-0.5 text-[11px] font-mono font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
-                  0.0.1
+                  0.0.2
                 </span>
               </div>
               <p className="text-xs text-paper-500 dark:text-paper-400 hidden sm:block">

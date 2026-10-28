@@ -1,4 +1,4 @@
-# Kitaplığım 📚 (v0.0.1)
+# Kitaplığım 📚 (v0.0.2)
 
 Kişisel kütüphane, kitap notları/alıntıları ve okuma hedefleri takip uygulaması.
 
@@ -34,7 +34,7 @@ Yalın, edebi ve göz yormayan bir arayüze sahiptir.
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Lucide React
 - **Backend / Database**: Firebase Cloud Firestore & Firebase Authentication
-- **Hosting**: Firebase Hosting (`kitapligim.web.app`)
+- **Hosting**: Firebase Hosting (`benimkitapligim.web.app`)
 
 ## 🚀 Kurulum ve Yerel Çalıştırma
 
@@ -57,5 +57,5 @@ Firestore kuralları `firestore.rules` dosyasında tanımlıdır:
 
 ## 📦 Sürüm Yönetimi
 
-- Güncel sürüm: `0.0.1`
+- Güncel sürüm: `0.0.2`
 - Semver kurallarına göre `index.html`/`Header.tsx`, `package.json` ve `README.md` dosyalarında sürüm senkronize tutulur.
