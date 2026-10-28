@@ -25,13 +25,13 @@ import { Book, BookNote, ReadingGoal } from '../types';
 
 export const AUTHORIZED_EMAIL = 'kitapligim@emre.mozmail.com';
 
-// Firebase configuration for Kitaplığım
+// Firebase configuration for Kitaplığım (loaded securely from environment variables)
 export const firebaseConfig = {
-  projectId: "benimkitapligim",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "benimkitapligim",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
-  storageBucket: "benimkitapligim.firebasestorage.app",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "benimkitapligim.firebasestorage.app",
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: "benimkitapligim.firebaseapp.com",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "benimkitapligim.firebaseapp.com",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
   projectNumber: import.meta.env.VITE_FIREBASE_PROJECT_NUMBER || ""
 };
